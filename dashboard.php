@@ -1,3 +1,5 @@
+
+
 <?php
 $pageTitle = 'My Invoices - invoicescheduler.com';
 $pageBodyAttributes = ' class="bg-gray-100 dark:bg-dark-bg min-h-screen transition-colors duration-200"';
