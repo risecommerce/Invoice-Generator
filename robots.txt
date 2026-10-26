@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+Sitemap: https://invoicescheduler.com/sitemap.xml
+
+Disallow: /contact-handler.php

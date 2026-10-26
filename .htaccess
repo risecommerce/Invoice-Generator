@@ -1,0 +1,41 @@
+# Block dotfiles (.env, .env.example, .git, etc.) from being served
+<FilesMatch "^\.">
+  Require all denied
+</FilesMatch>
+
+# Stop Apache guessing files by name (conflicts with extensionless URLs)
+Options -MultiViews
+
+DirectoryIndex index.php
+
+RewriteEngine On
+
+# Detect the base path so rules work at the domain root (production)
+# and in a subfolder such as /invoicesgedular/ (local MAMP)
+RewriteCond %{REQUEST_URI}::$1 ^(.*?/)(.*)::\2$
+RewriteRule ^(.*)$ - [E=BASE:%1]
+
+# 1. www -> non-www, straight to HTTPS in one hop
+RewriteCond %{HTTP_HOST} ^www\.(invoicescheduler\.com)$ [NC]
+RewriteRule ^ https://%1%{REQUEST_URI} [R=301,L,NE]
+
+# 2. /index and /index.php -> / (homepage has one URL)
+RewriteCond %{REQUEST_METHOD} GET
+RewriteCond %{THE_REQUEST} \s[^?\s]*/index(\.php)?[?\s] [NC]
+RewriteRule ^(.*/)?index(\.php)?$ %{ENV:BASE}$1 [R=301,L,NE]
+
+# 3. /page.php -> /page (GET only, so form POSTs keep working; API left alone)
+RewriteCond %{REQUEST_METHOD} GET
+RewriteCond %{THE_REQUEST} \s[^?\s]+\.php[?\s] [NC]
+RewriteCond %{REQUEST_URI} !/api/ [NC]
+RewriteRule ^(.+)\.php$ %{ENV:BASE}$1 [R=301,L,NE]
+
+# 4. /page/ -> /page (one URL per page, no trailing-slash duplicates)
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.+)/$ %{ENV:BASE}$1 [R=301,L,NE]
+
+# 5. Serve /page from page.php internally, only when that file exists
+#    (missing files now return a proper 404 instead of a 500 loop)
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_FILENAME}.php -f
+RewriteRule ^(.+)$ $1.php [L]
